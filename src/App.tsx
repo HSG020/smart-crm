@@ -119,7 +119,7 @@ function App() {
     console.log('Rendering content for key:', selectedKey)
     switch (selectedKey) {
       case 'welcome':
-        return <ErrorBoundary><Welcome /></ErrorBoundary>
+        return <ErrorBoundary><Welcome onNavigate={setSelectedKey} /></ErrorBoundary>
       case 'customers':
         return <ErrorBoundary><Customers /></ErrorBoundary>
       case 'reminders':
@@ -166,10 +166,26 @@ function App() {
           bottom: 0
         }}
       >
-        <div className="p-4 text-center">
-          <h1 className="text-white text-xl font-bold">
+        <div className="p-4 text-center" style={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          margin: '16px',
+          borderRadius: '8px'
+        }}>
+          <h1 style={{
+            color: '#fff',
+            fontSize: collapsed ? '18px' : '24px',
+            fontWeight: 'bold',
+            margin: 0,
+            textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+            letterSpacing: '1px'
+          }}>
             {collapsed ? 'CRM' : '智能CRM'}
           </h1>
+          {!collapsed && (
+            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', marginTop: '4px', margin: 0 }}>
+              客户关系管理系统
+            </p>
+          )}
         </div>
         <Menu
           theme="dark"

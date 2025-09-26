@@ -1,15 +1,16 @@
 import { create } from 'zustand'
 import { Customer } from '../types'
-import { storage } from '../utils/storage'
+import { supabase } from '../lib/supabase'
+import { message } from 'antd'
 
 interface CustomerStore {
   customers: Customer[]
   loading: boolean
   searchTerm: string
   selectedCustomer: Customer | null
-  
+
   setCustomers: (customers: Customer[]) => void
-  addCustomer: (customer: Customer) => Promise<void>
+  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>
   updateCustomer: (customer: Customer) => Promise<void>
   deleteCustomer: (id: string) => Promise<void>
   loadCustomers: () => Promise<void>
@@ -26,44 +27,88 @@ export const useCustomerStore = create<CustomerStore>((set, get) => ({
 
   setCustomers: (customers) => set({ customers }),
 
-  addCustomer: async (customer) => {
+  addCustomer: async (customerData) => {
     try {
-      await storage.save('customers', customer)
-      set((state) => ({ customers: [...state.customers, customer] }))
-    } catch (error) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('未登录')
+
+      const { data, error } = await supabase
+        .from('customers')
+        .insert({
+          ...customerData,
+          user_id: user.id,
+          tags: customerData.tags || [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      set((state) => ({ customers: [...state.customers, data] }))
+      message.success('客户添加成功')
+    } catch (error: any) {
       console.error('Failed to add customer:', error)
+      message.error(error.message || '添加客户失败')
     }
   },
 
   updateCustomer: async (customer) => {
     try {
-      await storage.save('customers', customer)
+      const { error } = await supabase
+        .from('customers')
+        .update({
+          ...customer,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', customer.id)
+
+      if (error) throw error
+
       set((state) => ({
         customers: state.customers.map((c) => c.id === customer.id ? customer : c)
       }))
-    } catch (error) {
+      message.success('客户更新成功')
+    } catch (error: any) {
       console.error('Failed to update customer:', error)
+      message.error(error.message || '更新客户失败')
     }
   },
 
   deleteCustomer: async (id) => {
     try {
-      await storage.delete('customers', id)
+      const { error } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
       set((state) => ({
         customers: state.customers.filter((c) => c.id !== id)
       }))
-    } catch (error) {
+      message.success('客户删除成功')
+    } catch (error: any) {
       console.error('Failed to delete customer:', error)
+      message.error(error.message || '删除客户失败')
     }
   },
 
   loadCustomers: async () => {
     set({ loading: true })
     try {
-      const customers = await storage.getAll<Customer>('customers')
-      set({ customers, loading: false })
-    } catch (error) {
+      const { data, error } = await supabase
+        .from('customers')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+
+      set({ customers: data || [], loading: false })
+    } catch (error: any) {
       console.error('Failed to load customers:', error)
+      message.error(error.message || '加载客户失败')
       set({ loading: false })
     }
   },
