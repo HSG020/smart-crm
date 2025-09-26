@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Card, Row, Col, Statistic, Button, Space, Badge, Tabs, message, Empty, Modal } from 'antd'
+import { Card, Row, Col, Statistic, Button, Space, Badge, Tabs, message, Empty } from 'antd'
 import {
   BellOutlined,
   ExclamationCircleOutlined,
@@ -31,6 +31,7 @@ export const Reminders: React.FC = () => {
   const { customers, loadCustomers } = useCustomerStore()
   const [activeTab, setActiveTab] = useState('today')
   const [showReminderForm, setShowReminderForm] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
 
   useEffect(() => {
     loadReminders()
@@ -58,31 +59,65 @@ export const Reminders: React.FC = () => {
   }
 
   const handleGenerateReminders = async () => {
-    try {
-      message.loading('正在智能生成提醒...', 1)
-      const newReminders = generateFollowUpReminders(customers)
+    if (isGenerating) {
+      return
+    }
 
-      if (newReminders.length === 0) {
+    setIsGenerating(true)
+    const hideMessage = message.loading('正在智能生成提醒...', 0)
+
+    try {
+      const generatedReminders = generateFollowUpReminders(customers)
+
+      if (generatedReminders.length === 0) {
         message.info('暂无需要生成的提醒')
         return
       }
 
-      for (const reminder of newReminders) {
-        const existing = reminders.find(r =>
-          r.customerId === reminder.customerId &&
-          r.type === reminder.type &&
-          Math.abs(new Date(r.reminderDate).getTime() - new Date(reminder.reminderDate).getTime()) < 24 * 60 * 60 * 1000
-        )
+      let createdCount = 0
 
-        if (!existing) {
-          await addReminder(reminder)
+      for (const reminder of generatedReminders) {
+        const reminderDate = reminder.reminderDate instanceof Date
+          ? reminder.reminderDate
+          : new Date(reminder.reminderDate)
+
+        const hasExisting = reminders.some(existing => {
+          const existingDate = new Date(existing.reminderDate)
+          return (
+            existing.customerId === reminder.customerId &&
+            Math.abs(existingDate.getTime() - reminderDate.getTime()) < 24 * 60 * 60 * 1000
+          )
+        })
+
+        if (hasExisting) {
+          continue
         }
+
+        const customer = customers.find(c => c.id === reminder.customerId)
+
+        await addReminder({
+          customerId: reminder.customerId,
+          reminderDate: reminderDate.toISOString(),
+          message: (reminder as any).description || (reminder as any).message || '智能提醒',
+          type: (reminder as any).type || 'follow_up',
+          customerName: customer?.name || '',
+          title: (reminder as any).title,
+          description: (reminder as any).description
+        } as any)
+        createdCount += 1
       }
 
-      message.success(`已生成${newReminders.length}个智能提醒`)
+      if (createdCount === 0) {
+        message.info('暂无需要生成的提醒')
+      } else {
+        message.success(`已生成${createdCount}个智能提醒`)
+      }
     } catch (error) {
       console.error('Generate reminders error:', error)
       message.error('生成提醒失败，请重试')
+    } finally {
+      hideMessage()
+      setIsGenerating(false)
     }
   }
 
@@ -171,7 +206,8 @@ export const Reminders: React.FC = () => {
             <Button
               icon={<SyncOutlined />}
               onClick={handleGenerateReminders}
-              loading={loading}
+              loading={loading || isGenerating}
+              disabled={loading || isGenerating || customers.length === 0}
             >
               智能生成提醒
             </Button>
@@ -179,6 +215,7 @@ export const Reminders: React.FC = () => {
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => {
+                console.debug('添加提醒按钮被点击')
                 setShowReminderForm(true)
                 message.info('正在打开添加提醒表单...')
               }}

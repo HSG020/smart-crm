@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Form, Input, DatePicker, Select, Modal, message } from 'antd'
 import { Reminder } from '../types'
 import { useReminderStore } from '../store/reminderStore'
@@ -22,6 +22,24 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
   const [loading, setLoading] = useState(false)
   const { addReminder, updateReminder } = useReminderStore()
   const { customers } = useCustomerStore()
+  useEffect(() => {
+    if (!visible) {
+      form.resetFields()
+      return
+    }
+
+    if (reminder) {
+      form.setFieldsValue({
+        customerId: reminder.customerId,
+        reminderDate: dayjs(reminder.reminderDate),
+        type: (reminder as any).type || 'phone',
+        message: (reminder as any).message || (reminder as any).description || ''
+      })
+    } else {
+      form.resetFields()
+      form.setFieldsValue({ type: 'phone' })
+    }
+  }, [visible, reminder, form])
 
   const handleSubmit = async () => {
     try {
@@ -65,17 +83,12 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
       onCancel={onCancel}
       onOk={handleSubmit}
       confirmLoading={loading}
+      destroyOnClose
       width={500}
     >
       <Form
         form={form}
         layout="vertical"
-        initialValues={reminder ? {
-          ...reminder,
-          reminderDate: dayjs(reminder.reminderDate)
-        } : {
-          type: 'phone'
-        }}
       >
         <Form.Item
           name="customerId"

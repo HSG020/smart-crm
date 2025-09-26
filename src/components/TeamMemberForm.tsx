@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Form, Input, Select, Modal, message } from 'antd'
 import { User } from '../types'
 import { useTeamStore } from '../store/teamStore'
@@ -17,6 +17,19 @@ export const TeamMemberForm: React.FC<TeamMemberFormProps> = ({
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const { addUser, updateUser } = useTeamStore()
+  useEffect(() => {
+    if (!visible) {
+      form.resetFields()
+      return
+    }
+
+    if (member) {
+      form.setFieldsValue(member)
+    } else {
+      form.resetFields()
+      form.setFieldsValue({ role: 'member' })
+    }
+  }, [visible, member, form])
 
   const handleSubmit = async () => {
     try {
@@ -68,14 +81,12 @@ export const TeamMemberForm: React.FC<TeamMemberFormProps> = ({
       onCancel={onCancel}
       onOk={handleSubmit}
       confirmLoading={loading}
+      destroyOnClose
       width={500}
     >
       <Form
         form={form}
         layout="vertical"
-        initialValues={member || {
-          role: 'member'
-        }}
       >
         <Form.Item
           name="name"

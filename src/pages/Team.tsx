@@ -88,6 +88,12 @@ export const Team: React.FC = () => {
     setShowAssignModal(true)
   }
 
+  const handleAddMemberClick = () => {
+    console.debug('添加成员按钮被点击')
+    setEditingMember(undefined)
+    setShowMemberForm(true)
+  }
+
   // 计算团队业绩排行
   const getTeamRankings = () => {
     return users.map(user => {
@@ -260,10 +266,7 @@ export const Team: React.FC = () => {
                   <Button
                     type="primary"
                     icon={<PlusOutlined />}
-                    onClick={() => {
-                      setEditingMember(undefined)
-                      setShowMemberForm(true)
-                    }}
+                    onClick={handleAddMemberClick}
                   >
                     添加成员
                   </Button>

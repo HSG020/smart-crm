@@ -112,7 +112,7 @@ export const useTeamStore = create<TeamStore>((set, get) => ({
 
   loadConflicts: async () => {
     try {
-      const conflicts = await storage.getAll<CustomerConflict>('customerConflicts')
+      const conflicts = await storage.getAll<CustomerConflict>('conflicts')
       set({ conflicts: conflicts.filter(c => !c.resolvedAt) })
     } catch (error) {
       console.error('Failed to load conflicts:', error)
@@ -181,7 +181,7 @@ export const useTeamStore = create<TeamStore>((set, get) => ({
       const conflict = conflicts.find(c => c.customerId === customerId)
       if (conflict) {
         const resolvedConflict = { ...conflict, resolvedAt: new Date() }
-        await storage.save('customerConflicts', resolvedConflict)
+        await storage.save('conflicts', resolvedConflict)
         set((state) => ({
           conflicts: state.conflicts.filter(c => c.customerId !== customerId)
         }))
