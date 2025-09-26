@@ -1,3 +1,4 @@
+// Deployment version: v2.0.2 - All buttons fixed (2025-09-26)
 import { useState, useEffect } from 'react'
 import { Layout, Menu, Button, Avatar, Dropdown } from 'antd'
 import {
