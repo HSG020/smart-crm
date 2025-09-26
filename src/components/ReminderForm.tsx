@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react'
-import { Form, Input, DatePicker, Select, Modal, message } from 'antd'
-import { Reminder } from '../types'
+import { Modal, Form, Input, DatePicker, Select, message } from 'antd'
+import dayjs from 'dayjs'
 import { useReminderStore } from '../store/reminderStore'
 import { useCustomerStore } from '../store/customerStore'
-import dayjs from 'dayjs'
 
 const { TextArea } = Input
 
 interface ReminderFormProps {
   visible: boolean
   onCancel: () => void
-  reminder?: Reminder
+  reminder?: any
 }
 
 export const ReminderForm: React.FC<ReminderFormProps> = ({
@@ -19,9 +18,10 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
   reminder
 }) => {
   const [form] = Form.useForm()
-  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const { addReminder, updateReminder } = useReminderStore()
   const { customers } = useCustomerStore()
+
   useEffect(() => {
     if (!visible) {
       form.resetFields()
@@ -31,48 +31,52 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
     if (reminder) {
       form.setFieldsValue({
         customerId: reminder.customerId,
-        reminderDate: dayjs(reminder.reminderDate),
-        type: (reminder as any).type || 'phone',
-        message: (reminder as any).message || (reminder as any).description || ''
+        reminderDate: reminder.reminderDate ? dayjs(reminder.reminderDate) : undefined,
+        type: reminder.type || 'follow_up',
+        message: reminder.message || reminder.description || ''
       })
     } else {
       form.resetFields()
-      form.setFieldsValue({ type: 'phone' })
+      form.setFieldsValue({ type: 'follow_up' })
     }
   }, [visible, reminder, form])
 
-  const handleSubmit = async () => {
+  const handleClose = () => {
+    form.resetFields()
+    onCancel()
+  }
+
+  const handleOk = async () => {
     try {
-      setLoading(true)
+      setSaving(true)
       const values = await form.validateFields()
+      const customer = customers.find((c) => c.id === values.customerId)
 
-      const selectedCustomer = customers.find(c => c.id === values.customerId)
-
-      const reminderData = {
-        ...values,
-        customerName: selectedCustomer?.name || '',
-        reminderDate: values.reminderDate.toISOString(),
-        type: values.type || 'phone'
-      }
+      const payload = {
+        customerId: values.customerId,
+        reminderDate: values.reminderDate?.toISOString(),
+        message: values.message,
+        type: values.type,
+        customerName: customer?.name || ''
+      } as any
 
       if (reminder) {
         await updateReminder({
           ...reminder,
-          ...reminderData
+          ...payload
         })
         message.success('提醒更新成功')
       } else {
-        await addReminder(reminderData)
+        await addReminder(payload)
         message.success('提醒添加成功')
       }
 
-      form.resetFields()
-      onCancel()
+      handleClose()
     } catch (error) {
-      console.error('Failed to save reminder:', error)
+      console.error('保存提醒失败', error)
       message.error('保存失败，请重试')
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
@@ -80,30 +84,25 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
     <Modal
       title={reminder ? '编辑提醒' : '添加提醒'}
       open={visible}
-      onCancel={onCancel}
-      onOk={handleSubmit}
-      confirmLoading={loading}
+      onCancel={handleClose}
+      onOk={handleOk}
+      confirmLoading={saving}
       destroyOnClose
-      width={500}
+      width={520}
     >
-      <Form
-        form={form}
-        layout="vertical"
-      >
+      <Form form={form} layout="vertical">
         <Form.Item
           name="customerId"
           label="选择客户"
           rules={[{ required: true, message: '请选择客户' }]}
         >
-          <Select
-            placeholder="请选择客户"
-            showSearch
-            optionFilterProp="label"
-            options={customers.map(c => ({
-              value: c.id,
-              label: c.name
-            }))}
-          />
+          <Select placeholder="请选择客户" showSearch optionFilterProp="label">
+            {customers.map((customer) => (
+              <Select.Option key={customer.id} value={customer.id} label={customer.name}>
+                {customer.name}
+              </Select.Option>
+            ))}
+          </Select>
         </Form.Item>
 
         <Form.Item
@@ -114,8 +113,8 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
           <DatePicker
             showTime
             style={{ width: '100%' }}
-            placeholder="选择提醒时间"
             format="YYYY-MM-DD HH:mm"
+            placeholder="选择提醒时间"
           />
         </Form.Item>
 
@@ -125,12 +124,10 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
           rules={[{ required: true, message: '请选择提醒类型' }]}
         >
           <Select placeholder="请选择提醒类型">
-            <Select.Option value="phone">电话跟进</Select.Option>
-            <Select.Option value="meeting">会议</Select.Option>
-            <Select.Option value="email">邮件</Select.Option>
-            <Select.Option value="wechat">微信</Select.Option>
-            <Select.Option value="visit">拜访</Select.Option>
-            <Select.Option value="other">其他</Select.Option>
+            <Select.Option value="follow_up">跟进提醒</Select.Option>
+            <Select.Option value="birthday">生日提醒</Select.Option>
+            <Select.Option value="festival">节日提醒</Select.Option>
+            <Select.Option value="contract">合同提醒</Select.Option>
           </Select>
         </Form.Item>
 
@@ -139,11 +136,7 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
           label="提醒内容"
           rules={[{ required: true, message: '请输入提醒内容' }]}
         >
-          <TextArea
-            rows={4}
-            placeholder="请输入提醒内容"
-            maxLength={500}
-          />
+          <TextArea rows={4} placeholder="请输入提醒内容" maxLength={500} />
         </Form.Item>
       </Form>
     </Modal>

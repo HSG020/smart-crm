@@ -31,6 +31,7 @@ export const Reminders: React.FC = () => {
   const { customers, loadCustomers } = useCustomerStore()
   const [activeTab, setActiveTab] = useState('today')
   const [showReminderForm, setShowReminderForm] = useState(false)
+  const [editingReminder, setEditingReminder] = useState<any>()
   const [isGenerating, setIsGenerating] = useState(false)
 
   useEffect(() => {
@@ -58,6 +59,12 @@ export const Reminders: React.FC = () => {
     }
   }
 
+  const handleAddReminderClick = () => {
+    setEditingReminder(undefined)
+    setShowReminderForm(true)
+    message.open({ type: 'info', content: '正在打开添加提醒表单', duration: 1.5 })
+  }
+
   const handleGenerateReminders = async () => {
     if (isGenerating) {
       return
@@ -81,7 +88,7 @@ export const Reminders: React.FC = () => {
           ? reminder.reminderDate
           : new Date(reminder.reminderDate)
 
-        const hasExisting = reminders.some(existing => {
+        const exists = reminders.some(existing => {
           const existingDate = new Date(existing.reminderDate)
           return (
             existing.customerId === reminder.customerId &&
@@ -89,7 +96,7 @@ export const Reminders: React.FC = () => {
           )
         })
 
-        if (hasExisting) {
+        if (exists) {
           continue
         }
 
@@ -99,10 +106,8 @@ export const Reminders: React.FC = () => {
           customerId: reminder.customerId,
           reminderDate: reminderDate.toISOString(),
           message: (reminder as any).description || (reminder as any).message || '智能提醒',
-          type: (reminder as any).type || 'follow_up',
-          customerName: customer?.name || '',
-          title: (reminder as any).title,
-          description: (reminder as any).description
+          type: reminder.type || 'follow_up',
+          customerName: customer?.name || ''
         } as any)
         createdCount += 1
       }
@@ -116,7 +121,9 @@ export const Reminders: React.FC = () => {
       console.error('Generate reminders error:', error)
       message.error('生成提醒失败，请重试')
     } finally {
-      hideMessage()
+      if (typeof hideMessage === 'function') {
+        hideMessage()
+      }
       setIsGenerating(false)
     }
   }
@@ -207,18 +214,13 @@ export const Reminders: React.FC = () => {
               icon={<SyncOutlined />}
               onClick={handleGenerateReminders}
               loading={loading || isGenerating}
-              disabled={loading || isGenerating || customers.length === 0}
             >
               智能生成提醒
             </Button>
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              onClick={() => {
-                console.debug('添加提醒按钮被点击')
-                setShowReminderForm(true)
-                message.info('正在打开添加提醒表单...')
-              }}
+              onClick={handleAddReminderClick}
             >
               添加提醒
             </Button>
@@ -290,7 +292,11 @@ export const Reminders: React.FC = () => {
 
       <ReminderForm
         visible={showReminderForm}
-        onCancel={() => setShowReminderForm(false)}
+        reminder={editingReminder}
+        onCancel={() => {
+          setShowReminderForm(false)
+          setEditingReminder(undefined)
+        }}
       />
     </div>
   )

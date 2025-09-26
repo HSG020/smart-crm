@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Card, Tabs, message } from 'antd'
+import React, { useEffect, useState } from 'react'
+import { Card, Tabs, message, Button, Space, Modal } from 'antd'
 import { 
   AppstoreOutlined, 
   SearchOutlined, 
@@ -18,7 +18,12 @@ const { TabPane } = Tabs
 export const Tools: React.FC = () => {
   const { customers, updateCustomer } = useCustomerStore()
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>(customers)
-  const [searchFilters, setSearchFilters] = useState({})
+  const [searchFilters, setSearchFilters] = useState<Record<string, any>>({})
+  const [showAdvancedSearchModal, setShowAdvancedSearchModal] = useState(false)
+
+  useEffect(() => {
+    setFilteredCustomers(customers)
+  }, [customers])
 
   const handleBatchUpdate = async (customerIds: string[], updates: Partial<Customer>) => {
     try {
@@ -41,13 +46,28 @@ export const Tools: React.FC = () => {
     }
   }
 
-  const handleFilterChange = (filtered: Customer[]) => {
-    setFilteredCustomers(filtered)
+  const handleOpenAdvancedSearch = () => {
+    setShowAdvancedSearchModal(true)
+    message.open({ type: 'info', content: '高级搜索已打开', duration: 1.5 })
   }
 
-  const handleCustomerSelect = (customer: Customer) => {
-    message.info(`已选择客户：${customer.name} - ${customer.company}`)
-    // 这里可以添加更多操作，比如跳转到客户详情页
+  const handleCloseAdvancedSearch = () => {
+    setShowAdvancedSearchModal(false)
+  }
+
+  const handleAdvancedSearchResults = (filtered: Customer[]) => {
+    setFilteredCustomers(filtered)
+    message.success(`已应用高级搜索，共找到 ${filtered.length} 个客户`)
+    setShowAdvancedSearchModal(false)
+  }
+
+  const getActiveFilterCount = () => {
+    return Object.values(searchFilters).filter((value) => {
+      if (Array.isArray(value)) {
+        return value.length > 0
+      }
+      return value !== undefined && value !== '' && value !== null
+    }).length
   }
 
   // 日历视图组件（简化版）
@@ -126,14 +146,19 @@ export const Tools: React.FC = () => {
               ),
               children: (
                 <div>
-                  <AdvancedSearch
-                    customers={customers}
-                    onFilterChange={handleFilterChange}
-                    onFiltersChange={setSearchFilters}
-                  />
-                  <div style={{ marginTop: 16, fontSize: '14px', color: '#666' }}>
-                    搜索结果：{filteredCustomers.length} / {customers.length} 个客户
-                  </div>
+                  <Space style={{ marginBottom: 16 }} wrap>
+                    <Button type="primary" icon={<SearchOutlined />} onClick={handleOpenAdvancedSearch}>
+                      打开高级搜索
+                    </Button>
+                    <span style={{ fontSize: '14px', color: '#666' }}>
+                      搜索结果：{filteredCustomers.length} / {customers.length} 个客户
+                    </span>
+                    {getActiveFilterCount() > 0 && (
+                      <span style={{ fontSize: '12px', color: '#999' }}>
+                        已应用 {getActiveFilterCount()} 个筛选条件
+                      </span>
+                    )}
+                  </Space>
                 </div>
               )
             },
@@ -190,6 +215,21 @@ export const Tools: React.FC = () => {
           ]}
         />
       </Card>
+
+      <Modal
+        title="高级搜索"
+        open={showAdvancedSearchModal}
+        onCancel={handleCloseAdvancedSearch}
+        footer={null}
+        width={960}
+        destroyOnClose
+      >
+        <AdvancedSearch
+          customers={customers}
+          onFilterChange={handleAdvancedSearchResults}
+          onFiltersChange={setSearchFilters}
+        />
+      </Modal>
     </div>
   )
 }

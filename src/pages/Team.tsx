@@ -92,6 +92,7 @@ export const Team: React.FC = () => {
     console.debug('添加成员按钮被点击')
     setEditingMember(undefined)
     setShowMemberForm(true)
+    message.open({ type: 'info', content: '正在打开添加成员表单', duration: 1.5 })
   }
 
   // 计算团队业绩排行
