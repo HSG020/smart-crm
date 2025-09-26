@@ -59,22 +59,29 @@ export const Reminders: React.FC = () => {
 
   const handleGenerateReminders = async () => {
     try {
+      message.loading('正在智能生成提醒...', 1)
       const newReminders = generateFollowUpReminders(customers)
-      
+
+      if (newReminders.length === 0) {
+        message.info('暂无需要生成的提醒')
+        return
+      }
+
       for (const reminder of newReminders) {
-        const existing = reminders.find(r => 
-          r.customerId === reminder.customerId && 
+        const existing = reminders.find(r =>
+          r.customerId === reminder.customerId &&
           r.type === reminder.type &&
           Math.abs(new Date(r.reminderDate).getTime() - new Date(reminder.reminderDate).getTime()) < 24 * 60 * 60 * 1000
         )
-        
+
         if (!existing) {
           await addReminder(reminder)
         }
       }
-      
+
       message.success(`已生成${newReminders.length}个智能提醒`)
     } catch (error) {
+      console.error('Generate reminders error:', error)
       message.error('生成提醒失败，请重试')
     }
   }
