@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react'
-import { Card, Row, Col, Statistic, Button, Space, Badge, Tabs, message, Empty } from 'antd'
-import { 
-  BellOutlined, 
-  ExclamationCircleOutlined, 
+import { Card, Row, Col, Statistic, Button, Space, Badge, Tabs, message, Empty, Modal } from 'antd'
+import {
+  BellOutlined,
+  ExclamationCircleOutlined,
   ClockCircleOutlined,
   PlusOutlined,
-  SyncOutlined 
+  SyncOutlined
 } from '@ant-design/icons'
 import { ReminderCard } from '../components/ReminderCard'
+import { ReminderForm } from '../components/ReminderForm'
 import { useReminderStore } from '../store/reminderStore'
 import { useCustomerStore } from '../store/customerStore'
 import { generateFollowUpReminders, getBestContactTime } from '../utils/reminderUtils'
@@ -29,6 +30,7 @@ export const Reminders: React.FC = () => {
 
   const { customers, loadCustomers } = useCustomerStore()
   const [activeTab, setActiveTab] = useState('today')
+  const [showReminderForm, setShowReminderForm] = useState(false)
 
   useEffect(() => {
     loadReminders()
@@ -111,6 +113,7 @@ export const Reminders: React.FC = () => {
 
   return (
     <div style={{ padding: '24px' }}>
+
       <Row gutter={16} style={{ marginBottom: '24px' }}>
         <Col span={6}>
           <Card>
@@ -168,7 +171,10 @@ export const Reminders: React.FC = () => {
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              onClick={() => message.info('手动添加提醒功能开发中')}
+              onClick={() => {
+                setShowReminderForm(true)
+                message.info('正在打开添加提醒表单...')
+              }}
             >
               添加提醒
             </Button>
@@ -237,6 +243,11 @@ export const Reminders: React.FC = () => {
           ]}
         />
       </Card>
+
+      <ReminderForm
+        visible={showReminderForm}
+        onCancel={() => setShowReminderForm(false)}
+      />
     </div>
   )
 }

@@ -33,7 +33,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ onNavigate }) => {
       }
     }
     loadData()
-  }, [])
+  }, [loadCustomers, loadReminders, loadCommunications])
 
   const pendingReminders = [...getTodayReminders(), ...getOverdueReminders()].length
   const opportunities = customers.filter(c => c.status === 'following' || c.status === 'potential').length

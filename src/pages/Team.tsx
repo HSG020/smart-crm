@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Card, Row, Col, Button, Space, Modal, message, Tabs, Select, Table, Tag, Avatar } from 'antd'
 import { PlusOutlined, UserAddOutlined, MessageOutlined, TrophyOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
 import { TeamMemberCard } from '../components/TeamMemberCard'
+import { TeamMemberForm } from '../components/TeamMemberForm'
 import { TeamMessageBoard } from '../components/TeamMessageBoard'
 import { useTeamStore } from '../store/teamStore'
 import { useCustomerStore } from '../store/customerStore'
@@ -33,6 +34,8 @@ export const Team: React.FC = () => {
   const [activeTab, setActiveTab] = useState('members')
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [selectedUserId, setSelectedUserId] = useState<string>()
+  const [showMemberForm, setShowMemberForm] = useState(false)
+  const [editingMember, setEditingMember] = useState<User | undefined>()
 
   useEffect(() => {
     loadUsers()
@@ -254,7 +257,14 @@ export const Team: React.FC = () => {
             children: (
               <div>
                 <Space style={{ marginBottom: 16 }}>
-                  <Button type="primary" icon={<PlusOutlined />}>
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => {
+                      setEditingMember(undefined)
+                      setShowMemberForm(true)
+                    }}
+                  >
                     添加成员
                   </Button>
                 </Space>
@@ -381,6 +391,16 @@ export const Team: React.FC = () => {
           </ul>
         </div>
       </Modal>
+
+      {/* 团队成员表单 */}
+      <TeamMemberForm
+        visible={showMemberForm}
+        onCancel={() => {
+          setShowMemberForm(false)
+          setEditingMember(undefined)
+        }}
+        member={editingMember}
+      />
     </div>
   )
 }
