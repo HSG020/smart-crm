@@ -70,6 +70,11 @@ export const Tools: React.FC = () => {
     }).length
   }
 
+
+  const handleCustomerSelect = (customer: Customer) => {
+    message.info(`已选择客户：${customer.name} - ${customer.company}`)
+  }
+
   // 日历视图组件（简化版）
   const CalendarView = () => (
     <Card title="跟进计划日历">
