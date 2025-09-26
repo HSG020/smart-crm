@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { Layout, Menu } from 'antd'
+import { useState, useEffect } from 'react'
+import { Layout, Menu, Button, Avatar, Dropdown } from 'antd'
 import {
   UserOutlined,
   BellOutlined,
@@ -9,8 +9,11 @@ import {
   BarChartOutlined,
   TeamOutlined,
   ToolOutlined,
-  HomeOutlined
+  HomeOutlined,
+  LogoutOutlined
 } from '@ant-design/icons'
+import { supabase } from './lib/supabase'
+import Auth from './components/Auth'
 import { Customers } from './pages/Customers'
 import { Reminders } from './pages/Reminders'
 import { Communications } from './pages/Communications'
@@ -27,14 +30,42 @@ const { Header, Sider, Content } = Layout
 function App() {
   const [selectedKey, setSelectedKey] = useState('welcome')
   const [collapsed, setCollapsed] = useState(false)
-  
+  const [session, setSession] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
   useEffect(() => {
-    console.log('App component mounted, selectedKey:', selectedKey)
+    // 检查用户登录状态
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setLoading(false)
+    })
+
+    // 监听认证状态变化
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
-  
-  useEffect(() => {
-    console.log('selectedKey changed to:', selectedKey)
-  }, [selectedKey])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">加载中...</div>
+      </div>
+    )
+  }
+
+  // 如果没有登录，显示登录页面
+  if (!session) {
+    return <Auth />
+  }
 
   const menuItems = [
     {
@@ -85,118 +116,103 @@ function App() {
   ]
 
   const renderContent = () => {
-    console.log('renderContent called with selectedKey:', selectedKey)
-    
-    try {
-      switch (selectedKey) {
-        case 'welcome':
-          console.log('Rendering Welcome component')
-          return <Welcome />
-        case 'customers':
-          console.log('Rendering Customers component')
-          return <Customers />
-        case 'reminders':
-          console.log('Rendering Reminders component')
-          return <Reminders />
-        case 'communications':
-          console.log('Rendering Communications component')
-          return <Communications />
-        case 'scripts':
-          console.log('Rendering Scripts component')
-          return <Scripts />
-        case 'sales':
-          console.log('Rendering Sales component')
-          return <Sales />
-        case 'analytics':
-          console.log('Rendering Analytics component')
-          return <Analytics />
-        case 'team':
-          console.log('Rendering Team component')
-          return <Team />
-        case 'tools':
-          console.log('Rendering Tools component')
-          return <Tools />
-        default:
-          console.log('Rendering default content')
-          return (
-            <div style={{ padding: '24px', textAlign: 'center' }}>
-              <h2>功能开发中...</h2>
-              <p>该模块正在开发中，敬请期待</p>
-            </div>
-          )
-      }
-    } catch (error) {
-      console.error('Error rendering content:', error)
-      return (
-        <div style={{ padding: '24px', textAlign: 'center' }}>
-          <h2>渲染错误</h2>
-          <p>组件加载失败，请检查控制台错误信息</p>
-          <pre style={{ color: 'red', textAlign: 'left' }}>
-            {(error as Error).toString()}
-          </pre>
-        </div>
-      )
+    console.log('Rendering content for key:', selectedKey)
+    switch (selectedKey) {
+      case 'welcome':
+        return <ErrorBoundary><Welcome /></ErrorBoundary>
+      case 'customers':
+        return <ErrorBoundary><Customers /></ErrorBoundary>
+      case 'reminders':
+        return <ErrorBoundary><Reminders /></ErrorBoundary>
+      case 'communications':
+        return <ErrorBoundary><Communications /></ErrorBoundary>
+      case 'scripts':
+        return <ErrorBoundary><Scripts /></ErrorBoundary>
+      case 'sales':
+        return <ErrorBoundary><Sales /></ErrorBoundary>
+      case 'analytics':
+        return <ErrorBoundary><Analytics /></ErrorBoundary>
+      case 'team':
+        return <ErrorBoundary><Team /></ErrorBoundary>
+      case 'tools':
+        return <ErrorBoundary><Tools /></ErrorBoundary>
+      default:
+        console.warn('Unknown menu key:', selectedKey)
+        return <ErrorBoundary><Welcome /></ErrorBoundary>
     }
   }
+
+  const userMenuItems = [
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: '退出登录',
+      onClick: handleSignOut
+    }
+  ]
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider
-        trigger={null}
         collapsible
         collapsed={collapsed}
-        onCollapse={setCollapsed}
-        theme="light"
-        style={{ 
-          boxShadow: '2px 0 8px rgba(0,0,0,0.15)'
+        onCollapse={(value) => setCollapsed(value)}
+        style={{
+          overflow: 'auto',
+          height: '100vh',
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          bottom: 0
         }}
       >
-        <div style={{ 
-          height: '64px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          borderBottom: '1px solid #f0f0f0',
-          fontSize: '18px',
-          fontWeight: 'bold',
-          color: '#1890ff'
-        }}>
-          {collapsed ? 'CRM' : '智能CRM系统'}
+        <div className="p-4 text-center">
+          <h1 className="text-white text-xl font-bold">
+            {collapsed ? 'CRM' : '智能CRM'}
+          </h1>
         </div>
         <Menu
-          mode="inline"
+          theme="dark"
           selectedKeys={[selectedKey]}
+          mode="inline"
           items={menuItems}
-          onClick={({ key }) => setSelectedKey(key)}
-          style={{ border: 'none' }}
+          onClick={({ key }) => {
+            console.log('Menu clicked:', key)
+            setSelectedKey(key)
+          }}
         />
       </Sider>
-      <Layout>
-        <Header 
-          style={{ 
-            padding: '0 24px', 
-            background: '#fff', 
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}
-        >
-          <h1 style={{ margin: 0, fontSize: '20px', color: '#333' }}>
-            {menuItems.find(item => item.key === selectedKey)?.label}
-          </h1>
-          <div style={{ color: '#666' }}>
-            智能客户关系管理系统
-          </div>
-        </Header>
-        <Content style={{ 
-          margin: 0, 
-          background: '#f5f5f5',
-          minHeight: 'calc(100vh - 64px)'
+
+      <Layout style={{ marginLeft: collapsed ? 80 : 200 }}>
+        <Header style={{
+          background: '#fff',
+          padding: '0 24px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
         }}>
-          <ErrorBoundary>
-            {renderContent()}
-          </ErrorBoundary>
+          <h2 className="text-lg font-semibold">
+            {menuItems.find(item => item.key === selectedKey)?.label || '首页'}
+          </h2>
+          <Dropdown
+            menu={{ items: userMenuItems }}
+            placement="bottomRight"
+          >
+            <Button type="text" className="flex items-center gap-2">
+              <Avatar size="small" icon={<UserOutlined />} />
+              <span>{session.user.email}</span>
+            </Button>
+          </Dropdown>
+        </Header>
+
+        <Content style={{
+          margin: '24px',
+          padding: 24,
+          background: '#fff',
+          minHeight: 280,
+          overflow: 'auto'
+        }}>
+          {renderContent()}
         </Content>
       </Layout>
     </Layout>
