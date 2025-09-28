@@ -11,6 +11,8 @@ import dayjs from 'dayjs'
 const { Option } = Select
 const { RangePicker } = DatePicker
 
+type CommunicationFormData = Partial<Communication> & { customerId: string }
+
 export const Communications: React.FC = () => {
   const {
     communications,
@@ -45,13 +47,29 @@ export const Communications: React.FC = () => {
     setShowForm(true)
   }
 
-  const handleSubmitCommunication = async (communication: Communication) => {
+  const handleSubmitCommunication = async (communication: CommunicationFormData) => {
     try {
       if (editingCommunication) {
-        await updateCommunication(communication)
+        const payload: Communication = {
+          ...editingCommunication,
+          ...communication,
+          id: editingCommunication.id,
+          customerId: communication.customerId,
+          createdAt: communication.createdAt ?? editingCommunication.createdAt
+        }
+        await updateCommunication(payload)
         message.success('沟通记录更新成功')
       } else {
-        await addCommunication(communication)
+        const { id: _ignored, customerName: _customerName, ...rest } = communication
+        await addCommunication({
+          customerId: rest.customerId,
+          type: rest.type ?? 'call',
+          content: rest.content ?? '',
+          result: rest.result ?? '',
+          nextAction: rest.nextAction,
+          attachments: rest.attachments,
+          createdAt: rest.createdAt ?? new Date().toISOString()
+        })
         message.success('沟通记录添加成功')
       }
       setShowForm(false)

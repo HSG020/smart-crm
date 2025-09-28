@@ -1,14 +1,47 @@
 import { create } from 'zustand'
-import { Reminder } from '../types'
-import { supabase } from '../lib/supabase'
 import { message } from 'antd'
+import { Reminder } from '../types'
+import { supabase, SupabaseFollowUpReminder } from '../lib/supabase'
+
+type NewReminderInput = Omit<Reminder, 'id' | 'createdAt'> & { completed?: boolean }
+
+const mapReminderFromDb = (record: SupabaseFollowUpReminder): Reminder => ({
+  id: record.id,
+  customerId: record.customer_id,
+  customerName: record.customers?.name ?? undefined,
+  title: record.title ?? '跟进提醒',
+  description: record.message ?? '',
+  type: record.type,
+  reminderDate: record.remind_date,
+  completed: record.is_completed,
+  createdAt: record.created_at
+})
+
+const buildInsertPayload = (data: NewReminderInput, userId: string) => ({
+  customer_id: data.customerId,
+  remind_date: data.reminderDate,
+  title: data.title,
+  message: data.description,
+  type: data.type,
+  is_completed: data.completed ?? false,
+  user_id: userId,
+  created_at: data.createdAt ?? new Date().toISOString()
+})
+
+const buildUpdatePayload = (data: Reminder) => ({
+  remind_date: data.reminderDate,
+  title: data.title,
+  message: data.description,
+  type: data.type,
+  is_completed: data.completed
+})
 
 interface ReminderStore {
   reminders: Reminder[]
   loading: boolean
 
   setReminders: (reminders: Reminder[]) => void
-  addReminder: (reminder: Omit<Reminder, 'id' | 'createdAt'>) => Promise<void>
+  addReminder: (reminder: NewReminderInput) => Promise<void>
   updateReminder: (reminder: Reminder) => Promise<void>
   deleteReminder: (id: string) => Promise<void>
   loadReminders: () => Promise<void>
@@ -29,33 +62,19 @@ export const useReminderStore = create<ReminderStore>((set, get) => ({
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('未登录')
 
+      const payload = buildInsertPayload(reminderData, user.id)
+
       const { data, error } = await supabase
         .from('follow_up_reminders')
-        .insert({
-          customer_id: reminderData.customerId,
-          remind_date: reminderData.reminderDate,
-          message: reminderData.message,
-          is_completed: false,
-          user_id: user.id,
-          created_at: new Date().toISOString()
-        })
-        .select()
+        .insert(payload)
+        .select(`*, customers(name)`)
         .single()
 
       if (error) throw error
 
-      const newReminder: Reminder = {
-        id: data.id,
-        customerId: data.customer_id,
-        customerName: reminderData.customerName,
-        reminderDate: data.remind_date,
-        message: data.message,
-        type: reminderData.type,
-        completed: data.is_completed,
-        createdAt: data.created_at
-      }
+      const newReminder = mapReminderFromDb(data as SupabaseFollowUpReminder)
 
-      set((state) => ({ reminders: [...state.reminders, newReminder] }))
+      set((state) => ({ reminders: [newReminder, ...state.reminders] }))
       message.success('提醒添加成功')
     } catch (error: any) {
       console.error('Failed to add reminder:', error)
@@ -65,19 +84,21 @@ export const useReminderStore = create<ReminderStore>((set, get) => ({
 
   updateReminder: async (reminder) => {
     try {
-      const { error } = await supabase
+      const payload = buildUpdatePayload(reminder)
+
+      const { data, error } = await supabase
         .from('follow_up_reminders')
-        .update({
-          remind_date: reminder.reminderDate,
-          message: reminder.message,
-          is_completed: reminder.completed
-        })
+        .update(payload)
         .eq('id', reminder.id)
+        .select(`*, customers(name)`)
+        .single()
 
       if (error) throw error
 
+      const mapped = mapReminderFromDb(data as SupabaseFollowUpReminder)
+
       set((state) => ({
-        reminders: state.reminders.map((r) => r.id === reminder.id ? reminder : r)
+        reminders: state.reminders.map((r) => r.id === reminder.id ? mapped : r)
       }))
       message.success('提醒更新成功')
     } catch (error: any) {
@@ -112,7 +133,7 @@ export const useReminderStore = create<ReminderStore>((set, get) => ({
         .from('follow_up_reminders')
         .select(`
           *,
-          customers!customer_id (
+          customers (
             name
           )
         `)
@@ -120,16 +141,7 @@ export const useReminderStore = create<ReminderStore>((set, get) => ({
 
       if (error) throw error
 
-      const reminders: Reminder[] = (data || []).map(item => ({
-        id: item.id,
-        customerId: item.customer_id,
-        customerName: item.customers?.name || '未知客户',
-        reminderDate: item.remind_date,
-        message: item.message,
-        type: 'phone' as const,
-        completed: item.is_completed,
-        createdAt: item.created_at
-      }))
+      const reminders: Reminder[] = (data as SupabaseFollowUpReminder[] | null)?.map(mapReminderFromDb) ?? []
 
       set({ reminders, loading: false })
     } catch (error: any) {

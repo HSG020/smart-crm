@@ -1,32 +1,34 @@
 export interface Customer {
   id: string
   name: string
-  company: string
-  position: string
-  phone: string
-  email: string
-  industry: string
+  company?: string
+  position?: string
+  phone?: string
+  email?: string
+  industry?: string
   importance: 'high' | 'medium' | 'low'
-  status: 'prospect' | 'contacted' | 'negotiating' | 'closed' | 'lost'
+  status: 'potential' | 'following' | 'signed' | 'lost'
   tags: string[]
-  lastContactDate?: Date
-  nextFollowUpDate?: Date
-  birthday?: Date
+  lastContactDate?: string
+  nextFollowUpDate?: string
+  birthday?: string
   address?: string
   notes?: string
-  createdAt: Date
-  updatedAt: Date
+  source?: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Communication {
   id: string
   customerId: string
-  type: 'call' | 'email' | 'meeting' | 'wechat' | 'visit'
+  type: 'call' | 'email' | 'meeting' | 'wechat' | 'visit' | 'other'
   content: string
   result: string
   nextAction?: string
-  createdAt: Date
+  createdAt: string
   attachments?: string[]
+  customerName?: string
 }
 
 export interface Reminder {
@@ -35,9 +37,10 @@ export interface Reminder {
   type: 'follow_up' | 'birthday' | 'festival' | 'contract'
   title: string
   description: string
-  reminderDate: Date
+  reminderDate: string
   completed: boolean
-  createdAt: Date
+  createdAt: string
+  customerName?: string
 }
 
 export interface SalesStage {

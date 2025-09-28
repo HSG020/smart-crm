@@ -86,6 +86,26 @@
    npm install
    ```
 
+### 环境配置
+
+1. **初始化 Supabase 数据库**
+   - 在 [Supabase](https://supabase.com/) 创建项目，并记录项目 URL 与匿名密钥。
+   - 打开 Supabase SQL Editor，执行 `database/database-schema.sql` 初始化表结构；如需示例数据，可继续执行 `database/test-data.sql`。
+
+2. **配置环境变量**
+   - 复制根目录的 `.env.example` 为 `.env.local`：
+     ```bash
+     cp .env.example .env.local
+     ```
+   - 将 Supabase 项目的 URL 与匿名密钥填入：
+     ```env
+     VITE_SUPABASE_URL=https://your-project-id.supabase.co
+     VITE_SUPABASE_ANON_KEY=your-anon-key
+     ```
+
+3. **创建测试账号**
+   - 启动项目后，通过登录/注册页面创建账号，或在 Supabase Auth 面板手动添加用户。
+
 3. **启动开发服务器**
    ```bash
    npm run dev
@@ -159,6 +179,7 @@ npm run preview
 - 📋 云端数据同步
 - 📋 AI智能分析
 - 📋 移动端优化
+- 📋 Supabase 全量数据迁移（详见 `docs/supabase-migration.md`）
 
 ## 🤝 贡献指南
 

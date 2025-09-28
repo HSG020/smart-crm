@@ -170,11 +170,10 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
       key: 'status',
       render: (status: string) => {
         const statusMap: Record<string, string> = {
-          'prospect': '潜在客户',
-          'contacted': '已联系',
-          'negotiating': '洽谈中',
-          'closed': '已成交',
-          'lost': '已失去'
+          potential: '潜在客户',
+          following: '跟进中',
+          signed: '已签约',
+          lost: '已流失'
         }
         return statusMap[status] || status
       }
@@ -345,11 +344,10 @@ export const BatchOperations: React.FC<BatchOperationsProps> = ({
             label="客户状态"
           >
             <Select placeholder="选择客户状态" allowClear>
-              <Option value="prospect">潜在客户</Option>
-              <Option value="contacted">已联系</Option>
-              <Option value="negotiating">洽谈中</Option>
-              <Option value="closed">已成交</Option>
-              <Option value="lost">已失去</Option>
+              <Option value="potential">潜在客户</Option>
+              <Option value="following">跟进中</Option>
+              <Option value="signed">已签约</Option>
+              <Option value="lost">已流失</Option>
             </Select>
           </Form.Item>
 

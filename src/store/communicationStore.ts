@@ -1,14 +1,47 @@
 import { create } from 'zustand'
-import { Communication } from '../types'
-import { supabase } from '../lib/supabase'
 import { message } from 'antd'
+import { Communication } from '../types'
+import { supabase, SupabaseCommunicationHistory } from '../lib/supabase'
+
+type NewCommunicationInput = Omit<Communication, 'id'>
+
+const mapCommunicationFromDb = (record: SupabaseCommunicationHistory): Communication => ({
+  id: record.id,
+  customerId: record.customer_id,
+  customerName: record.customers?.name ?? undefined,
+  type: record.type as Communication['type'],
+  content: record.content,
+  result: record.result ?? '',
+  nextAction: record.next_step ?? undefined,
+  attachments: record.attachments ?? undefined,
+  createdAt: record.created_at
+})
+
+const buildInsertPayload = (data: NewCommunicationInput, userId: string) => ({
+  customer_id: data.customerId,
+  type: data.type,
+  content: data.content,
+  result: data.result ?? null,
+  next_step: data.nextAction ?? null,
+  attachments: data.attachments ?? [],
+  user_id: userId,
+  created_at: data.createdAt ?? new Date().toISOString()
+})
+
+const buildUpdatePayload = (data: Communication) => ({
+  type: data.type,
+  content: data.content,
+  result: data.result ?? null,
+  next_step: data.nextAction ?? null,
+  attachments: data.attachments ?? []
+})
 
 interface CommunicationStore {
   communications: Communication[]
   loading: boolean
 
   setCommunications: (communications: Communication[]) => void
-  addCommunication: (communication: Omit<Communication, 'id' | 'createdAt'>) => Promise<void>
+  addCommunication: (communication: NewCommunicationInput) => Promise<void>
   updateCommunication: (communication: Communication) => Promise<void>
   deleteCommunication: (id: string) => Promise<void>
   loadCommunications: () => Promise<void>
@@ -27,34 +60,17 @@ export const useCommunicationStore = create<CommunicationStore>((set, get) => ({
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('未登录')
 
+      const payload = buildInsertPayload(communicationData, user.id)
+
       const { data, error } = await supabase
         .from('communication_history')
-        .insert({
-          customer_id: communicationData.customerId,
-          type: communicationData.type,
-          content: communicationData.content,
-          result: communicationData.result,
-          next_step: communicationData.nextStep,
-          attachments: communicationData.attachments || [],
-          user_id: user.id,
-          created_at: new Date().toISOString()
-        })
-        .select()
+        .insert(payload)
+        .select(`*, customers(name)`)
         .single()
 
       if (error) throw error
 
-      const newCommunication: Communication = {
-        id: data.id,
-        customerId: data.customer_id,
-        customerName: communicationData.customerName,
-        type: data.type,
-        content: data.content,
-        result: data.result,
-        nextStep: data.next_step,
-        attachments: data.attachments,
-        createdAt: data.created_at
-      }
+      const newCommunication = mapCommunicationFromDb(data as SupabaseCommunicationHistory)
 
       set((state) => ({
         communications: [newCommunication, ...state.communications].sort(
@@ -70,22 +86,22 @@ export const useCommunicationStore = create<CommunicationStore>((set, get) => ({
 
   updateCommunication: async (communication) => {
     try {
-      const { error } = await supabase
+      const payload = buildUpdatePayload(communication)
+
+      const { data, error } = await supabase
         .from('communication_history')
-        .update({
-          type: communication.type,
-          content: communication.content,
-          result: communication.result,
-          next_step: communication.nextStep,
-          attachments: communication.attachments
-        })
+        .update(payload)
         .eq('id', communication.id)
+        .select(`*, customers(name)`)
+        .single()
 
       if (error) throw error
 
+      const mapped = mapCommunicationFromDb(data as SupabaseCommunicationHistory)
+
       set((state) => ({
         communications: state.communications.map((c) =>
-          c.id === communication.id ? communication : c
+          c.id === communication.id ? mapped : c
         )
       }))
       message.success('沟通记录更新成功')
@@ -129,17 +145,7 @@ export const useCommunicationStore = create<CommunicationStore>((set, get) => ({
 
       if (error) throw error
 
-      const communications: Communication[] = (data || []).map(item => ({
-        id: item.id,
-        customerId: item.customer_id,
-        customerName: item.customers?.name || '未知客户',
-        type: item.type,
-        content: item.content,
-        result: item.result,
-        nextStep: item.next_step,
-        attachments: item.attachments,
-        createdAt: item.created_at
-      }))
+      const communications: Communication[] = (data as SupabaseCommunicationHistory[] | null)?.map(mapCommunicationFromDb) ?? []
 
       set({ communications, loading: false })
     } catch (error: any) {

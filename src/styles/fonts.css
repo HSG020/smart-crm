@@ -1,0 +1,153 @@
+/**
+ * 字体优化配置
+ * 使用 font-display: swap 提高字体加载性能
+ */
+
+/* 系统字体栈 - 快速加载，无需下载 */
+:root {
+  --font-system: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+                 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue',
+                 Helvetica, Arial, sans-serif;
+
+  --font-monospace: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono',
+                    Consolas, 'Courier New', monospace;
+}
+
+/* 基础字体设置 */
+body {
+  font-family: var(--font-system);
+  font-display: swap;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga' 1, 'kern' 1;
+}
+
+/* 代码字体 */
+code, pre, kbd, samp {
+  font-family: var(--font-monospace);
+  font-display: swap;
+}
+
+/* Ant Design 图标字体优化 */
+@font-face {
+  font-family: 'anticon';
+  font-display: swap;
+  src: local('anticon');
+}
+
+/* 如果使用自定义字体，使用 font-display: swap */
+@font-face {
+  font-family: 'CustomFont';
+  font-display: swap;
+  font-weight: 400;
+  font-style: normal;
+  /*
+  src: url('/fonts/custom-font.woff2') format('woff2'),
+       url('/fonts/custom-font.woff') format('woff');
+  */
+}
+
+/* 中文字体优化 */
+.chinese-optimized {
+  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+               'WenQuanYi Micro Hei', var(--font-system);
+  font-display: swap;
+}
+
+/* 数字优化显示 */
+.number-font {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* 标题字体优化 */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 500;
+  line-height: 1.2;
+  font-display: swap;
+}
+
+/* 针对不同屏幕密度的字体优化 */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* 字体加载状态处理 */
+.fonts-loading body {
+  opacity: 0;
+}
+
+.fonts-loaded body {
+  opacity: 1;
+  transition: opacity 0.3s ease-in;
+}
+
+/* 字体大小响应式调整 */
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1024px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1440px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+/* 优化表格中的数字显示 */
+.ant-table {
+  font-variant-numeric: tabular-nums;
+}
+
+.ant-statistic-content-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 优化按钮文字 */
+.ant-btn {
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+/* 优化输入框 */
+.ant-input,
+.ant-select,
+.ant-picker {
+  font-family: var(--font-system);
+}
+
+/* 防止字体闪烁 (FOIT) */
+.font-loaded {
+  visibility: visible !important;
+}
+
+.font-loading {
+  visibility: hidden;
+}
+
+/* 性能优化：减少字体文件大小 */
+@supports (font-variant-numeric: tabular-nums) {
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* 使用 CSS containment 优化渲染 */
+.font-container {
+  contain: layout style;
+}

@@ -1,6 +1,7 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Table, Tag, Button, Space, Tooltip, Avatar } from 'antd'
-import { EditOutlined, DeleteOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons'
+import { EditOutlined, DeleteOutlined, PhoneOutlined, MailOutlined, EyeOutlined } from '@ant-design/icons'
 import { Customer } from '../types'
 import dayjs from 'dayjs'
 
@@ -19,6 +20,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
   onDelete,
   onView
 }) => {
+  const navigate = useNavigate()
   const getImportanceColor = (importance: string) => {
     switch (importance) {
       case 'high': return 'red'
@@ -30,10 +32,9 @@ export const CustomerList: React.FC<CustomerListProps> = ({
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'prospect': return 'default'
-      case 'contacted': return 'processing'
-      case 'negotiating': return 'warning'
-      case 'closed': return 'success'
+      case 'potential': return 'default'
+      case 'following': return 'processing'
+      case 'signed': return 'success'
       case 'lost': return 'error'
       default: return 'default'
     }
@@ -41,11 +42,10 @@ export const CustomerList: React.FC<CustomerListProps> = ({
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'prospect': return '潜在客户'
-      case 'contacted': return '已联系'
-      case 'negotiating': return '洽谈中'
-      case 'closed': return '已成交'
-      case 'lost': return '已失去'
+      case 'potential': return '潜在客户'
+      case 'following': return '跟进中'
+      case 'signed': return '已签约'
+      case 'lost': return '已流失'
       default: return status
     }
   }
@@ -162,17 +162,28 @@ export const CustomerList: React.FC<CustomerListProps> = ({
       key: 'actions',
       render: (record: Customer) => (
         <Space size="small">
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => onEdit(record)}
-          />
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => onDelete(record.id)}
-          />
+          <Tooltip title="查看详情">
+            <Button
+              type="text"
+              icon={<EyeOutlined />}
+              onClick={() => navigate(`/customers/${record.id}`)}
+            />
+          </Tooltip>
+          <Tooltip title="编辑">
+            <Button
+              type="text"
+              icon={<EditOutlined />}
+              onClick={() => onEdit(record)}
+            />
+          </Tooltip>
+          <Tooltip title="删除">
+            <Button
+              type="text"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => onDelete(record.id)}
+            />
+          </Tooltip>
         </Space>
       )
     }

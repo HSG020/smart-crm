@@ -1,0 +1,190 @@
+/**
+ * 关键 CSS - 首屏渲染所需的最小样式
+ * 这些样式会被内联到 HTML 中，加速首屏渲染
+ */
+
+/* Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Loading Spinner - 首屏加载时显示 */
+.app-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+  z-index: 9999;
+}
+
+.app-loader-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #1890ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.app-loader-text {
+  margin-top: 16px;
+  color: #666;
+  font-size: 14px;
+}
+
+/* Layout 基础样式 */
+.ant-layout {
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+.ant-layout-sider {
+  background: #001529;
+}
+
+.ant-layout-header {
+  background: #fff;
+  padding: 0;
+  box-shadow: 0 1px 4px rgba(0,21,41,.08);
+}
+
+.ant-layout-content {
+  margin: 24px 16px;
+  padding: 24px;
+  background: #fff;
+  min-height: 280px;
+}
+
+/* 防止内容闪烁 */
+.ant-menu {
+  background: transparent;
+}
+
+.ant-menu-dark {
+  background: #001529;
+}
+
+/* 字体优化 */
+body {
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'liga', 'kern';
+}
+
+/* 隐藏未加载完成的内容 */
+.lazy-loading {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.lazy-loaded {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* 骨架屏基础样式 */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* 响应式基础 */
+@media (max-width: 768px) {
+  .ant-layout-content {
+    margin: 12px 8px;
+    padding: 12px;
+  }
+}
+
+/* 防止布局偏移 */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 表格基础样式 */
+.ant-table {
+  font-size: 14px;
+}
+
+.ant-table-thead > tr > th {
+  background: #fafafa;
+}
+
+/* 卡片基础样式 */
+.ant-card {
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* 按钮基础样式 */
+.ant-btn {
+  border-radius: 2px;
+  font-weight: 400;
+}
+
+.ant-btn-primary {
+  background: #1890ff;
+  border-color: #1890ff;
+}
+
+/* 表单基础样式 */
+.ant-form-item {
+  margin-bottom: 24px;
+}
+
+/* 消息提示位置 */
+.ant-message {
+  top: 100px;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

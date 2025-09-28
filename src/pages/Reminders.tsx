@@ -12,7 +12,7 @@ import { ReminderForm } from '../components/ReminderForm'
 import { useReminderStore } from '../store/reminderStore'
 import { useCustomerStore } from '../store/customerStore'
 import { generateFollowUpReminders, getBestContactTime } from '../utils/reminderUtils'
-import { Customer } from '../types'
+import { Customer, Reminder } from '../types'
 
 const { TabPane } = Tabs
 
@@ -31,7 +31,7 @@ export const Reminders: React.FC = () => {
   const { customers, loadCustomers } = useCustomerStore()
   const [activeTab, setActiveTab] = useState('today')
   const [showReminderForm, setShowReminderForm] = useState(false)
-  const [editingReminder, setEditingReminder] = useState<any>()
+  const [editingReminder, setEditingReminder] = useState<Reminder | undefined>()
   const [isGenerating, setIsGenerating] = useState(false)
 
   useEffect(() => {
@@ -62,7 +62,6 @@ export const Reminders: React.FC = () => {
   const handleAddReminderClick = () => {
     setEditingReminder(undefined)
     setShowReminderForm(true)
-    message.open({ type: 'info', content: '正在打开添加提醒表单', duration: 1.5 })
   }
 
   const handleGenerateReminders = async () => {
@@ -84,9 +83,7 @@ export const Reminders: React.FC = () => {
       let createdCount = 0
 
       for (const reminder of generatedReminders) {
-        const reminderDate = reminder.reminderDate instanceof Date
-          ? reminder.reminderDate
-          : new Date(reminder.reminderDate)
+        const reminderDate = new Date(reminder.reminderDate)
 
         const exists = reminders.some(existing => {
           const existingDate = new Date(existing.reminderDate)
@@ -105,10 +102,12 @@ export const Reminders: React.FC = () => {
         await addReminder({
           customerId: reminder.customerId,
           reminderDate: reminderDate.toISOString(),
-          message: (reminder as any).description || (reminder as any).message || '智能提醒',
-          type: reminder.type || 'follow_up',
-          customerName: customer?.name || ''
-        } as any)
+          title: reminder.title,
+          description: reminder.description,
+          type: reminder.type,
+          customerName: customer?.name,
+          completed: false
+        })
         createdCount += 1
       }
 
@@ -143,7 +142,7 @@ export const Reminders: React.FC = () => {
     upcoming: upcomingReminders.length
   }
 
-  const renderReminderList = (reminderList: any[], emptyText: string) => {
+  const renderReminderList = (reminderList: Reminder[], emptyText: string) => {
     if (reminderList.length === 0) {
       return <Empty description={emptyText} />
     }
@@ -154,7 +153,10 @@ export const Reminders: React.FC = () => {
         reminder={reminder}
         customer={getCustomerById(reminder.customerId)}
         onComplete={handleCompleteReminder}
-        onEdit={() => {}}
+        onEdit={() => {
+          setEditingReminder(reminder)
+          setShowReminderForm(true)
+        }}
         onContact={handleContact}
       />
     ))

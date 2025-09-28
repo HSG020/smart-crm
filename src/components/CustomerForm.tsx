@@ -1,15 +1,17 @@
 import React, { useEffect } from 'react'
 import { Form, Input, Select, DatePicker, Tag, Button, Row, Col, Space } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
-import { Customer } from '../types'
 import dayjs from 'dayjs'
+import { Customer } from '../types'
+
+type CustomerFormData = Omit<Customer, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
 
 const { Option } = Select
 const { TextArea } = Input
 
 interface CustomerFormProps {
   customer?: Customer
-  onSubmit: (customer: Customer) => void
+  onSubmit: (customer: CustomerFormData) => void
   onCancel: () => void
 }
 
@@ -32,15 +34,13 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
   }, [customer, form])
 
   const handleSubmit = (values: any) => {
-    const customerData: Customer = {
-      id: customer?.id || `customer_${Date.now()}`,
+    const customerData: CustomerFormData = {
+      id: customer?.id,
       ...values,
-      birthday: values.birthday ? values.birthday.toDate() : undefined,
-      lastContactDate: values.lastContactDate ? values.lastContactDate.toDate() : undefined,
-      nextFollowUpDate: values.nextFollowUpDate ? values.nextFollowUpDate.toDate() : undefined,
-      tags: values.tags || [],
-      createdAt: customer?.createdAt || new Date(),
-      updatedAt: new Date()
+      birthday: values.birthday ? values.birthday.format('YYYY-MM-DD') : undefined,
+      lastContactDate: values.lastContactDate ? values.lastContactDate.toISOString() : undefined,
+      nextFollowUpDate: values.nextFollowUpDate ? values.nextFollowUpDate.toISOString() : undefined,
+      tags: values.tags || []
     }
     onSubmit(customerData)
   }
@@ -52,7 +52,7 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
       onFinish={handleSubmit}
       initialValues={{
         importance: 'medium',
-        status: 'prospect',
+        status: 'potential',
         tags: []
       }}
     >
@@ -151,11 +151,10 @@ export const CustomerForm: React.FC<CustomerFormProps> = ({
             label="客户状态"
           >
             <Select>
-              <Option value="prospect">潜在客户</Option>
-              <Option value="contacted">已联系</Option>
-              <Option value="negotiating">洽谈中</Option>
-              <Option value="closed">已成交</Option>
-              <Option value="lost">已失去</Option>
+              <Option value="potential">潜在客户</Option>
+              <Option value="following">跟进中</Option>
+              <Option value="signed">已签约</Option>
+              <Option value="lost">已流失</Option>
             </Select>
           </Form.Item>
         </Col>

@@ -14,7 +14,7 @@ export const generateFollowUpReminders = (customers: Customer[]): Reminder[] => 
         description: `请及时跟进客户${customer.name}（${customer.company}），上次联系时间：${customer.lastContactDate ? new Date(customer.lastContactDate).toLocaleDateString() : '无'}`,
         reminderDate: customer.nextFollowUpDate,
         completed: false,
-        createdAt: now
+        createdAt: now.toISOString()
       }
       reminders.push(reminder)
     }
@@ -33,9 +33,9 @@ export const generateFollowUpReminders = (customers: Customer[]): Reminder[] => 
           type: 'birthday',
           title: `生日提醒：${customer.name}`,
           description: `${customer.name}的生日是${thisYear.toLocaleDateString()}，记得送上祝福！`,
-          reminderDate: thisYear,
+          reminderDate: thisYear.toISOString(),
           completed: false,
-          createdAt: now
+          createdAt: now.toISOString()
         }
         reminders.push(reminder)
       }
@@ -57,9 +57,9 @@ export const generateFollowUpReminders = (customers: Customer[]): Reminder[] => 
           type: 'follow_up',
           title: `长时间未联系：${customer.name}`,
           description: `已经${daysSinceContact}天未联系客户${customer.name}（${customer.company}），建议主动跟进`,
-          reminderDate: now,
+          reminderDate: now.toISOString(),
           completed: false,
-          createdAt: now
+          createdAt: now.toISOString()
         }
         reminders.push(reminder)
       }
@@ -95,24 +95,20 @@ export const getContactFrequency = (customer: Customer): { days: number; reason:
   const importance = customer.importance
   const status = customer.status
   
-  if (status === 'negotiating') {
-    return { days: 1, reason: '洽谈阶段需密切跟进' }
-  }
-  
-  if (status === 'contacted') {
+  if (status === 'following') {
     if (importance === 'high') return { days: 2, reason: '重要客户需要频繁跟进' }
     if (importance === 'medium') return { days: 3, reason: '中等重要客户定期跟进' }
     return { days: 5, reason: '普通客户适度跟进' }
   }
   
-  if (status === 'prospect') {
+  if (status === 'potential') {
     if (importance === 'high') return { days: 3, reason: '重要潜在客户需要关注' }
     if (importance === 'medium') return { days: 7, reason: '中等潜在客户定期联系' }
     return { days: 14, reason: '普通潜在客户定期维护' }
   }
   
-  if (status === 'closed') {
-    return { days: 30, reason: '已成交客户维护关系' }
+  if (status === 'signed') {
+    return { days: 30, reason: '已签约客户维护关系' }
   }
   
   return { days: 7, reason: '标准跟进频率' }
@@ -130,8 +126,8 @@ export const generateSmartReminder = (customer: Customer): Reminder => {
     type: 'follow_up',
     title: `智能提醒：跟进${customer.name}`,
     description: `${frequency.reason}，建议${frequency.days}天内联系客户${customer.name}（${customer.company}）`,
-    reminderDate: nextDate,
+    reminderDate: nextDate.toISOString(),
     completed: false,
-    createdAt: now
+    createdAt: now.toISOString()
   }
 }

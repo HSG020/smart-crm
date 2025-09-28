@@ -1,11 +1,12 @@
 import React from 'react'
 import { Card, Tag, Button, Space, Avatar, Typography, Tooltip } from 'antd'
-import { 
-  CheckOutlined, 
-  ClockCircleOutlined, 
+import {
+  CheckOutlined,
+  ClockCircleOutlined,
   PhoneOutlined,
   MessageOutlined,
-  ExclamationCircleOutlined 
+  ExclamationCircleOutlined,
+  EditOutlined
 } from '@ant-design/icons'
 import { Reminder, Customer } from '../types'
 import dayjs from 'dayjs'
@@ -132,24 +133,36 @@ export const ReminderCard: React.FC<ReminderCardProps> = ({
         </div>
         
         <Space size="small">
-          {!reminder.completed && customer && (
+          {!reminder.completed && (
             <>
-              <Tooltip title="打电话">
+              <Tooltip title="编辑">
                 <Button
                   type="text"
                   size="small"
-                  icon={<PhoneOutlined />}
-                  onClick={() => onContact(customer, 'phone')}
+                  icon={<EditOutlined />}
+                  onClick={() => onEdit(reminder)}
                 />
               </Tooltip>
-              <Tooltip title="发消息">
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<MessageOutlined />}
-                  onClick={() => onContact(customer, 'message')}
-                />
-              </Tooltip>
+              {customer && (
+                <>
+                  <Tooltip title="打电话">
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<PhoneOutlined />}
+                      onClick={() => onContact(customer, 'phone')}
+                    />
+                  </Tooltip>
+                  <Tooltip title="发消息">
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<MessageOutlined />}
+                      onClick={() => onContact(customer, 'message')}
+                    />
+                  </Tooltip>
+                </>
+              )}
               <Tooltip title="标记完成">
                 <Button
                   type="primary"

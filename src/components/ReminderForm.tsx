@@ -3,13 +3,14 @@ import { Modal, Form, Input, DatePicker, Select, message } from 'antd'
 import dayjs from 'dayjs'
 import { useReminderStore } from '../store/reminderStore'
 import { useCustomerStore } from '../store/customerStore'
+import { Reminder } from '../types'
 
 const { TextArea } = Input
 
 interface ReminderFormProps {
   visible: boolean
   onCancel: () => void
-  reminder?: any
+  reminder?: Reminder
 }
 
 export const ReminderForm: React.FC<ReminderFormProps> = ({
@@ -33,7 +34,8 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
         customerId: reminder.customerId,
         reminderDate: reminder.reminderDate ? dayjs(reminder.reminderDate) : undefined,
         type: reminder.type || 'follow_up',
-        message: reminder.message || reminder.description || ''
+        title: reminder.title,
+        description: reminder.description
       })
     } else {
       form.resetFields()
@@ -55,9 +57,11 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
       const payload = {
         customerId: values.customerId,
         reminderDate: values.reminderDate?.toISOString(),
-        message: values.message,
+        title: values.title,
+        description: values.description,
         type: values.type,
-        customerName: customer?.name || ''
+        customerName: customer?.name || '',
+        completed: reminder?.completed ?? false
       } as any
 
       if (reminder) {
@@ -106,6 +110,14 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
         </Form.Item>
 
         <Form.Item
+          name="title"
+          label="提醒标题"
+          rules={[{ required: true, message: '请输入提醒标题' }]}
+        >
+          <Input placeholder="例如：跟进张三报价" maxLength={80} />
+        </Form.Item>
+
+        <Form.Item
           name="reminderDate"
           label="提醒时间"
           rules={[{ required: true, message: '请选择提醒时间' }]}
@@ -132,7 +144,7 @@ export const ReminderForm: React.FC<ReminderFormProps> = ({
         </Form.Item>
 
         <Form.Item
-          name="message"
+          name="description"
           label="提醒内容"
           rules={[{ required: true, message: '请输入提醒内容' }]}
         >

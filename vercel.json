@@ -1,0 +1,14 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "installCommand": "npm install",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ],
+  "env": {
+    "VITE_APP_NAME": "Smart CRM",
+    "VITE_APP_VERSION": "2.2.0",
+    "VITE_ENV": "production"
+  }
+}

@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react'
-import { Form, Input, Select, DatePicker, Button, Space, Upload, message } from 'antd'
+import { Form, Input, Select, DatePicker, Button, Space, Upload } from 'antd'
 import { PlusOutlined, InboxOutlined } from '@ant-design/icons'
-import { Communication, Customer } from '../types'
 import dayjs from 'dayjs'
+import { Communication, Customer } from '../types'
 
 const { Option } = Select
 const { TextArea } = Input
@@ -12,7 +12,7 @@ interface CommunicationFormProps {
   communication?: Communication
   customers: Customer[]
   selectedCustomerId?: string
-  onSubmit: (communication: Communication) => void
+  onSubmit: (communication: Partial<Communication> & { customerId: string }) => void
   onCancel: () => void
 }
 
@@ -37,13 +37,20 @@ export const CommunicationForm: React.FC<CommunicationFormProps> = ({
   }, [communication, selectedCustomerId, form])
 
   const handleSubmit = (values: any) => {
-    const communicationData: Communication = {
-      id: communication?.id || `comm_${Date.now()}`,
-      ...values,
-      createdAt: values.createdAt ? values.createdAt.toDate() : new Date(),
-      attachments: values.attachments || []
-    }
-    onSubmit(communicationData)
+    const attachments: string[] | undefined = values.attachments
+      ? values.attachments.map((file: any) => file.url || file.name)
+      : undefined
+
+    onSubmit({
+      id: communication?.id,
+      customerId: values.customerId,
+      type: values.type,
+      content: values.content,
+      result: values.result,
+      nextAction: values.nextAction,
+      createdAt: values.createdAt ? values.createdAt.toISOString() : new Date().toISOString(),
+      attachments
+    })
   }
 
   const uploadProps = {

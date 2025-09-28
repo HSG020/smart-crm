@@ -8,6 +8,8 @@ import { Customer } from '../types'
 
 const { Search } = Input
 
+type CustomerFormData = Omit<Customer, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
+
 export const Customers: React.FC = () => {
   const {
     customers,
@@ -38,13 +40,21 @@ export const Customers: React.FC = () => {
     setShowForm(true)
   }
 
-  const handleSubmitCustomer = async (customer: Customer) => {
+  const handleSubmitCustomer = async (formData: CustomerFormData) => {
     try {
       if (editingCustomer) {
-        await updateCustomer(customer)
+        const payload: Customer = {
+          ...editingCustomer,
+          ...formData,
+          id: editingCustomer.id,
+          createdAt: editingCustomer.createdAt,
+          updatedAt: new Date().toISOString()
+        }
+        await updateCustomer(payload)
         message.success('客户信息更新成功')
       } else {
-        await addCustomer(customer)
+        const { id: _ignored, ...rest } = formData
+        await addCustomer(rest)
         message.success('客户添加成功')
       }
       setShowForm(false)
@@ -78,11 +88,12 @@ export const Customers: React.FC = () => {
 
   const filteredCustomers = getFilteredCustomers()
 
+  const now = new Date()
   const stats = {
     total: customers.length,
     highImportance: customers.filter(c => c.importance === 'high').length,
-    needFollowUp: customers.filter(c => c.nextFollowUpDate && new Date(c.nextFollowUpDate) <= new Date()).length,
-    prospects: customers.filter(c => c.status === 'prospect').length
+    needFollowUp: customers.filter(c => c.nextFollowUpDate && new Date(c.nextFollowUpDate) <= now).length,
+    potential: customers.filter(c => c.status === 'potential').length
   }
 
   return (
@@ -122,7 +133,7 @@ export const Customers: React.FC = () => {
           <Card>
             <Statistic
               title="潜在客户"
-              value={stats.prospects}
+              value={stats.potential}
               prefix={<UserOutlined />}
               valueStyle={{ color: '#52c41a' }}
             />

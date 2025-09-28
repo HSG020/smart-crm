@@ -51,7 +51,7 @@ export const CommunicationTimeline: React.FC<CommunicationTimelineProps> = ({
       case 'meeting': return '会议'
       case 'wechat': return '微信'
       case 'visit': return '拜访'
-      default: return type
+      default: return '其他'
     }
   }
 

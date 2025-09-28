@@ -7,6 +7,7 @@ CREATE TABLE customers (
   name VARCHAR(100) NOT NULL,
   company VARCHAR(200),
   position VARCHAR(100),
+  industry VARCHAR(100),
   phone VARCHAR(50),
   email VARCHAR(100),
   wechat VARCHAR(100),
@@ -18,6 +19,7 @@ CREATE TABLE customers (
   notes TEXT,
   last_contact TIMESTAMPTZ,
   next_follow_date TIMESTAMPTZ,
+  birthday DATE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
@@ -28,7 +30,9 @@ CREATE TABLE follow_up_reminders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
   remind_date TIMESTAMPTZ NOT NULL,
+  title VARCHAR(200),
   message TEXT,
+  type VARCHAR(20) CHECK (type IN ('follow_up', 'birthday', 'festival', 'contract')) DEFAULT 'follow_up',
   is_completed BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE
@@ -38,7 +42,7 @@ CREATE TABLE follow_up_reminders (
 CREATE TABLE communication_history (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
-  type VARCHAR(20) CHECK (type IN ('phone', 'email', 'meeting', 'wechat', 'other')) DEFAULT 'other',
+  type VARCHAR(20) CHECK (type IN ('phone', 'email', 'meeting', 'wechat', 'visit', 'other')) DEFAULT 'other',
   content TEXT NOT NULL,
   result TEXT,
   next_step TEXT,
